@@ -1,0 +1,34 @@
+
+#@reboot sleep 20 && python3 ip_get_MakeFile.py
+
+# node-redを常駐させる 
+# ただし、シャットダウンに時間がかかるようになる?ので、実運用では systemctl を使う方が良い
+@reboot node-red-pi --max-old-space-size=256
+
+
+# pigpioをデーモンとして起動
+@reboot sudo pigpiod
+
+
+# コマンド用リモコンの信号を受信し、コマンド名をファィルに書く
+@reboot python3 /home/pi/T_remocon/irrp_data_code04.py   >irrp_data_log.txt 2>&1
+
+# トイレリモコンのメインプログラム
+@reboot python3 /home/pi/T_remocon/toilet_01.py     >toilet_log.txt 2>&1
+
+
+# 間欠洗浄プログラム
+@reboot sleep 30 && python3 /home/pi/T_remocon/interval_cleaning.py     >interval_log.txt 2>&1
+
+
+# 1分毎にラズパイのcpu温度、使用率をファィルに書く
+* * * * * python3 /home/pi/T_remocon/SaveInfoRaspi.py
+
+
+
+
+# logが溜まりすぎると心配なので、定期的に消す
+# 毎週月曜日21:** リネーム&作成
+30 21 * * 2 mv /home/pi/T_remocon/toilet_log.txt       /home/pi/T_remocon/toilet_log.bak
+30 21 * * 2 mv /home/pi/T_remocon/interval_log.csv     /home/pi/T_remocon/interval_log.bak
+30 21 * * 2 mv /home/pi/T_remocon/irrp_data_log.csv    /home/pi/T_remocon/irrp_data_log.bak
